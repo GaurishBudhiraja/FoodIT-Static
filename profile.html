@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - FoodIt</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pb-24">
+    <div id="header-mount"></div>
+    
+    <main class="max-w-4xl mx-auto px-4 py-6">
+        <!-- Profile Header -->
+        <div class="text-center mb-8">
+            <div class="w-24 h-24 mx-auto bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-4xl mb-4">
+                👤
+            </div>
+            <h2 id="profile-name" class="text-2xl font-bold">User Name</h2>
+            <p id="profile-email" class="text-gray-500">user@example.com</p>
+            <p id="profile-phone" class="text-gray-500 text-sm">+91 XXXXX XXXXX</p>
+        </div>
+
+        <!-- Sections Tabs -->
+        <div class="tabs-list mb-6">
+            <button class="tab-trigger active" data-tab="account">Account</button>
+            <button class="tab-trigger" data-tab="orders">Orders</button>
+            <button class="tab-trigger" data-tab="more">More</button>
+        </div>
+
+        <!-- Account Tab -->
+        <div id="tab-account" class="tab-content active">
+            <!-- FoodIt Rewards -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>🎁 FoodIt Rewards</h3>
+                </div>
+                <div class="card-content">
+                    <p class="text-3xl font-bold text-orange-500" id="reward-points">0</p>
+                    <p class="text-sm text-gray-500">Reward Points</p>
+                    <button class="btn btn-outline btn-sm mt-3" onclick="viewRewards()">View History</button>
+                </div>
+            </div>
+
+            <!-- My Addresses -->
+            <div class="card mb-4">
+                <div class="card-header" style="display:flex;justify-content:space-between;">
+                    <h3>📍 My Addresses</h3>
+                    <button class="btn btn-sm btn-primary" onclick="addNewAddress()">+ Add New</button>
+                </div>
+                <div class="card-content" id="addresses-list">
+                    <!-- Addresses will be loaded here -->
+                </div>
+            </div>
+
+            <!-- My Saved Cards -->
+            <div class="card mb-4">
+                <div class="card-header" style="display:flex;justify-content:space-between;">
+                    <h3>💳 Saved Cards</h3>
+                    <button class="btn btn-sm btn-primary" onclick="addNewCard()">+ Add Card</button>
+                </div>
+                <div class="card-content" id="cards-list">
+                    <!-- Cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Favorites -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>❤️ Favorites</h3>
+                </div>
+                <div class="card-content" id="favorites-list">
+                    <!-- Favorites will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Tab -->
+        <div id="tab-orders" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📦 Order History</h3>
+                </div>
+                <div class="card-content" id="orders-history">
+                    <!-- Orders will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- More Tab -->
+        <div id="tab-more" class="tab-content">
+            <div class="card mb-3">
+                <div class="card-content">
+                    <button class="btn btn-ghost btn-full" style="justify-content:flex-start; gap:12px;" onclick="openHelp()">
+                        🤖 Need Help? AI Assistant
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-content">
+                    <button class="btn btn-ghost btn-full" style="justify-content:flex-start; gap:12px;" onclick="openTerms()">
+                        📜 Terms & Conditions
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-content">
+                    <button class="btn btn-ghost btn-full" style="justify-content:flex-start; gap:12px;" onclick="openContact()">
+                        📞 Contact Us
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-content">
+                    <button class="btn btn-ghost btn-full" style="justify-content:flex-start; gap:12px; color:#dc2626;" onclick="deleteAccount()">
+                        🗑️ Delete Account
+                    </button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content">
+                    <button class="btn btn-danger btn-full" onclick="logout()">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="bottomnav-mount"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const tabId = trigger.dataset.tab;
+                document.querySelectorAll('.tab-trigger').forEach(t => t.classList.remove('active'));
+                trigger.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+            });
+        });
+
+        // Load user data
+        function loadProfile() {
+            const user = store.user;
+            if (user) {
+                document.getElementById('profile-name').textContent = user.name || 'Guest User';
+                document.getElementById('profile-email').textContent = user.email || 'No email provided';
+                document.getElementById('profile-phone').textContent = user.phone || '+91 Not set';
+                document.getElementById('reward-points').textContent = user.rewardPoints || 0;
+            }
+            
+            // Load addresses
+            const addresses = user?.addresses || [];
+            const addressesDiv = document.getElementById('addresses-list');
+            if (addresses.length === 0) {
+                addressesDiv.innerHTML = '<p class="text-gray-500">No addresses saved. Add one now!</p>';
+            } else {
+                addressesDiv.innerHTML = addresses.map(addr => `
+                    <div class="address-item" style="padding:12px; border-bottom:1px solid var(--border-color);">
+                        <p><strong>${addr.label}</strong></p>
+                        <p class="text-sm text-gray-500">${addr.address}</p>
+                        <button class="btn btn-sm btn-outline mt-2" onclick="editAddress('${addr.id}')">Edit</button>
+                    </div>
+                `).join('');
+            }
+            
+            // Load cards
+            const cards = user?.cards || [];
+            const cardsDiv = document.getElementById('cards-list');
+            if (cards.length === 0) {
+                cardsDiv.innerHTML = '<p class="text-gray-500">No saved cards. Add one now!</p>';
+            } else {
+                cardsDiv.innerHTML = cards.map(card => `
+                    <div class="card-item" style="padding:12px; border-bottom:1px solid var(--border-color);">
+                        <p>💳 **** **** **** ${card.last4}</p>
+                        <p class="text-sm text-gray-500">Expires: ${card.expiry}</p>
+                    </div>
+                `).join('');
+            }
+            
+            // Load favorites
+            const favorites = JSON.parse(localStorage.getItem('foodit-favorites') || '[]');
+            const favDiv = document.getElementById('favorites-list');
+            if (favorites.length === 0) {
+                favDiv.innerHTML = '<p class="text-gray-500">No favorites yet. Add items to favorites!</p>';
+            } else {
+                favDiv.innerHTML = favorites.map(item => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+                        <span>${item.name}</span>
+                        <button class="btn btn-sm btn-primary" onclick="addToCart('${item.id}')">Order Again</button>
+                    </div>
+                `).join('');
+            }
+            
+            // Load orders
+            const orders = store.orders || [];
+            const ordersDiv = document.getElementById('orders-history');
+            if (orders.length === 0) {
+                ordersDiv.innerHTML = '<p class="text-gray-500">No orders yet. Start ordering!</p>';
+            } else {
+                ordersDiv.innerHTML = orders.map(order => `
+                    <div class="order-item" style="padding:16px; border-bottom:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span class="font-bold">Order #${order.id}</span>
+                            <span class="text-${order.status === 'delivered' ? 'green' : 'orange'}-500">${order.status}</span>
+                        </div>
+                        <p class="text-sm text-gray-500">${order.date}</p>
+                        <p class="font-bold mt-2">Total: ₹${order.total}</p>
+                        <button class="btn btn-sm btn-outline mt-2" onclick="trackOrder('${order.id}')">Track Order</button>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function addNewAddress() {
+            const address = prompt('Enter your full address:');
+            if (address) {
+                const label = prompt('Label for this address (Home/Work/Other):', 'Home');
+                if (!store.user.addresses) store.user.addresses = [];
+                store.user.addresses.push({
+                    id: Date.now().toString(),
+                    label: label || 'Home',
+                    address: address,
+                    isDefault: store.user.addresses.length === 0
+                });
+                saveStore();
+                loadProfile();
+                showToast('Address added successfully!');
+            }
+        }
+        
+        function addNewCard() {
+            const cardNumber = prompt('Enter card number (last 4 digits):');
+            if (cardNumber && cardNumber.length >= 4) {
+                const expiry = prompt('Expiry date (MM/YY):');
+                if (!store.user.cards) store.user.cards = [];
+                store.user.cards.push({
+                    id: Date.now().toString(),
+                    last4: cardNumber.slice(-4),
+                    expiry: expiry
+                });
+                saveStore();
+                loadProfile();
+                showToast('Card saved successfully!');
+            }
+        }
+        
+        function viewRewards() {
+            showToast(`You have ${store.user?.rewardPoints || 0} reward points!`);
+        }
+        
+        function openHelp() {
+            showToast('AI Assistant coming soon! 🤖');
+        }
+        
+        function openTerms() {
+            window.open('terms.html', '_blank');
+        }
+        
+        function openContact() {
+            showToast('Contact: support@foodit.com | +91 1234567890');
+        }
+        
+        function deleteAccount() {
+            if (confirm('Are you sure? This action cannot be undone!')) {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        }
+        
+        function logout() {
+            setUser(null);
+            window.location.href = 'index.html';
+        }
+        
+        function trackOrder(orderId) {
+            window.location.href = `track-order.html?id=${orderId}`;
+        }
+        
+        document.getElementById('header-mount').innerHTML = renderHeader('profile');
+        document.getElementById('bottomnav-mount').innerHTML = renderBottomNav('');
+        loadProfile();
+    </script>
+</body>
+</html>

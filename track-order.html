@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order - FoodIt</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="header-mount"></div>
+    
+    <main class="max-w-2xl mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold mb-6">Track Your Order</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>Order #<span id="order-id"></span></h3>
+            </div>
+            <div class="card-content">
+                <!-- Order Status Timeline -->
+                <div class="timeline" style="margin: 24px 0;">
+                    <div class="timeline-item" id="step-confirmed">
+                        <div class="timeline-icon">✅</div>
+                        <div class="timeline-content">
+                            <h4>Order Confirmed</h4>
+                            <p class="text-sm text-gray-500" id="confirmed-time"></p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" id="step-preparing">
+                        <div class="timeline-icon">👨‍🍳</div>
+                        <div class="timeline-content">
+                            <h4>Preparing</h4>
+                            <p class="text-sm text-gray-500">Restaurant is cooking your meal</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" id="step-out-for-delivery">
+                        <div class="timeline-icon">🛵</div>
+                        <div class="timeline-content">
+                            <h4>Out for Delivery</h4>
+                            <p class="text-sm text-gray-500">Your rider is on the way</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" id="step-delivered">
+                        <div class="timeline-icon">🏠</div>
+                        <div class="timeline-content">
+                            <h4>Delivered</h4>
+                            <p class="text-sm text-gray-500">Enjoy your meal!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="order-details" class="mt-6"></div>
+                
+                <button class="btn btn-primary btn-full mt-4" onclick="window.location.href='index.html'">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 20px;
+            bottom: 20px;
+            width: 2px;
+            background: var(--border-color);
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 30px;
+            display: flex;
+            gap: 16px;
+            opacity: 0.4;
+        }
+        .timeline-item.active {
+            opacity: 1;
+        }
+        .timeline-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        .timeline-item.active .timeline-icon {
+            background: #f97316;
+            color: white;
+        }
+        .timeline-content {
+            flex: 1;
+        }
+        .timeline-content h4 {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+    </style>
+    
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        
+        function loadOrder() {
+            const order = store.orders.find(o => o.id === orderId);
+            if (order) {
+                document.getElementById('order-id').textContent = order.id;
+                
+                // Simulate order status (in real app, this would come from API)
+                const steps = ['confirmed', 'preparing', 'out-for-delivery', 'delivered'];
+                let currentStep = 0;
+                
+                // Animate steps
+                const interval = setInterval(() => {
+                    if (currentStep < steps.length) {
+                        document.getElementById(`step-${steps[currentStep]}`).classList.add('active');
+                        currentStep++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 2000);
+                
+                document.getElementById('order-details').innerHTML = `
+                    <div style="border-top:1px solid var(--border-color); padding-top:16px;">
+                        <p><strong>Items:</strong></p>
+                        ${order.items.map(item => `
+                            <p class="text-sm">• ${item.name} x${item.quantity} - ₹${item.price * item.quantity}</p>
+                        `).join('')}
+                        <p class="mt-3"><strong>Total:</strong> ₹${order.total}</p>
+                        <p><strong>Delivery Type:</strong> ${order.deliveryType}</p>
+                        <p><strong>Payment:</strong> ${order.paymentMethod}</p>
+                        <p><strong>Estimated Delivery:</strong> ${order.estimatedDelivery}</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('order-id').textContent = 'Not Found';
+                document.querySelector('.card-content').innerHTML = '<p>Order not found. <a href="index.html">Go back to home</a></p>';
+            }
+        }
+        
+        document.getElementById('header-mount').innerHTML = renderHeader();
+        loadOrder();
+    </script>
+</body>
+</html>

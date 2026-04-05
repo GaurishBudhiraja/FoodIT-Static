@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodIt - Fast Food Delivery</title>
+    <meta name="description"
+        content="Order delicious food online with FoodIt. Fast delivery, great quality, amazing deals.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="pb-24">
+    <div id="header-mount"></div>
+
+    <!-- Location Bar -->
+    <div
+        style="background:linear-gradient(to right,#f97316,#ea580c);color:white;box-shadow:0 4px 12px rgba(0,0,0,0.1);border-bottom:4px solid #c2410c;">
+        <div class="max-w-7xl px-4"
+            style="padding-top:16px;padding-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div id="location-icon" style="background:#fb923c;border-radius:10px;padding:10px;color:white;">
+                </div>
+                <div>
+                    <p style="font-size:10px;text-transform:uppercase;font-weight:800;opacity:0.75;margin-bottom:4px;">
+                        Delivery Location</p>
+                    <p style="font-weight:700;font-size:14px;" id="location-text">Select location</p>
+                </div>
+            </div>
+            <div
+                style="background:rgba(234,88,12,0.5);backdrop-filter:blur(4px);padding:6px 12px;border-radius:9999px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;border:1px solid rgba(251,146,60,0.3);">
+                25-30 Mins
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl px-4 py-8">
+        <!-- Cuisine Categories -->
+        <section class="mb-12">
+            <div class="text-center mb-8 fade-in-up">
+                <h2 class="text-4xl font-black gradient-text-orange mb-2">What are you craving for?</h2>
+                <p style="color:#6b7280;font-weight:500;">Choose your favorite cuisine</p>
+            </div>
+            <div id="cuisine-grid" class="grid grid-3 md-grid-5" style="gap:24px;"></div>
+        </section>
+
+        <!-- Cashback Banner -->
+        <section class="mb-12">
+            <div
+                style="background:linear-gradient(to right,#7c3aed,#4f46e5);border-radius:24px;padding:24px;color:white;box-shadow:0 25px 50px rgba(0,0,0,0.15);position:relative;overflow:hidden;">
+                <div
+                    style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,0.1);border-radius:50%;filter:blur(30px);">
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:16px;position:relative;z-index:1;">
+                    <div
+                        style="background:rgba(255,255,255,0.2);padding:12px;border-radius:16px;backdrop-filter:blur(6px);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-weight:900;font-size:20px;margin-bottom:4px;">Guaranteed Cashback! 🎉</p>
+                        <p style="font-size:14px;opacity:0.85;font-weight:500;">On all orders above ₹99. FREE Delivery
+                            unlocked for your first order.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top 10 Bestsellers -->
+        <section>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px;"
+                class="fade-in-up">
+                <div style="font-size:28px;" class="float-animation">👑</div>
+                <h2 class="text-3xl font-black gradient-text-gold">Top 10 Bestsellers</h2>
+                <div style="font-size:28px;animation-delay:0.5s;" class="float-animation">👑</div>
+            </div>
+            <p class="text-center mb-6" style="color:#6b7280;font-size:18px;font-weight:500;">In your locality</p>
+            <div id="bestseller-grid" class="grid grid-2 lg-grid-4" style="gap:24px;"></div>
+        </section>
+    </main>
+
+    <div id="bottomnav-mount"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('header-mount').innerHTML = renderHeader('home');
+        document.getElementById('bottomnav-mount').innerHTML = renderBottomNav('home');
+        document.getElementById('location-icon').innerHTML = icons.mapPin;
+
+        // Location text
+        const locEl = document.getElementById('location-text');
+        if (store.selectedLocation?.address) {
+            locEl.textContent = store.selectedLocation.address.substring(0, 30) + '...';
+        }
+
+        // Render cuisine grid
+        const cg = document.getElementById('cuisine-grid');
+        cuisines.forEach((c, idx) => {
+            const a = document.createElement('a');
+            a.href = `cuisine.html?id=${c.id}`;
+            a.className = 'fade-in-up';
+            a.style.cssText = `display:flex;flex-direction:column;align-items:center;gap:12px;animation-delay:${idx * 75}ms;`;
+            a.innerHTML = `
+        <div class="card-3d glow-animation" style="position:relative;width:96px;height:96px;border-radius:50%;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.15);">
+          <img src="${c.image}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s;">
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.4),transparent);"></div>
+        </div>
+        <p style="font-weight:700;font-size:14px;color:#111;text-align:center;">${c.name}</p>
+      `;
+            a.addEventListener('mouseenter', () => a.querySelector('img').style.transform = 'scale(1.25)');
+            a.addEventListener('mouseleave', () => a.querySelector('img').style.transform = 'scale(1)');
+            cg.appendChild(a);
+        });
+
+        // Render bestsellers
+        const bg = document.getElementById('bestseller-grid');
+        function renderBestsellers() {
+            bg.innerHTML = menuItems.filter(i => i.isBestseller).slice(0, 8).map(renderMenuCard).join('');
+        }
+
+        document.addEventListener('cart:updated', renderBestsellers);
+
+        renderBestsellers();
+    </script>
+</body>
+
+</html>

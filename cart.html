@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - FoodIt</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="pb-24">
+    <div id="header-mount"></div>
+    <main id="cart-main" class="max-w-4xl px-4 py-6"></main>
+    <div id="bottomnav-mount"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('header-mount').innerHTML = renderHeader();
+        document.getElementById('bottomnav-mount').innerHTML = renderBottomNav('');
+
+        let selectedTip = 0;
+        let couponInput = '';
+
+        function renderCart() {
+            const main = document.getElementById('cart-main');
+            if (store.cart.items.length === 0) {
+                main.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;">
+            <div style="font-size:80px;margin-bottom:16px;">🛒</div>
+            <h1 class="text-2xl font-bold" style="margin-bottom:8px;">Your cart is empty</h1>
+            <p style="color:#9ca3af;margin-bottom:24px;">Add delicious food items to your cart</p>
+            <a href="index.html" class="btn btn-primary">Continue Shopping</a>
+          </div>`;
+                return;
+            }
+
+            const c = store.cart;
+            const total = calculateTotal();
+            const isFreeDelivery = c.subtotal >= 99;
+
+            let cartItemsHtml = '';
+            c.items.forEach(ci => {
+                const item = menuItems.find(m => m.id === ci.itemId) || {
+                    id: ci.itemId,
+                    name: ci.name || 'Cart Item',
+                    image: ci.image || 'https://via.placeholder.com/64?text=Food',
+                    price: ci.price
+                };
+                const optionEntries = Object.entries(ci.selectedOptions || {}).filter(([, value]) => value);
+                const optionsHtml = optionEntries.length > 0
+                    ? `<p style="font-size:12px;color:#9ca3af;margin-top:4px;">${optionEntries.map(([key, value]) => `${key}: ${value}`).join(' | ')}</p>`
+                    : '';
+                cartItemsHtml += `
+          <div style="display:flex;gap:16px;padding-bottom:16px;border-bottom:1px solid #f3f3f3;">
+            <img src="${item.image}" alt="${item.name}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;">
+            <div style="flex:1;">
+              <h3 style="font-weight:600;color:#111;">${item.name}</h3>
+              <p style="font-size:14px;color:#9ca3af;">₹${ci.price}</p>
+              ${optionsHtml}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0;" onclick="updateCartQty('${ci.itemId}',${ci.quantity - 1});renderCart();">${icons.minus}</button>
+              <span style="width:24px;text-align:center;font-weight:600;">${ci.quantity}</span>
+              <button class="btn btn-outline btn-sm" style="width:32px;height:32px;padding:0;" onclick="updateCartQty('${ci.itemId}',${ci.quantity + 1});renderCart();">${icons.plus}</button>
+              <button class="btn btn-ghost btn-sm" style="color:#ef4444;width:32px;height:32px;padding:0;" onclick="removeFromCart('${ci.itemId}');renderCart();">${icons.trash}</button>
+            </div>
+          </div>`;
+            });
+
+            const totalItems = c.items.reduce((s, i) => s + i.quantity, 0);
+
+            main.innerHTML = `
+        <h1 class="text-2xl font-bold mb-6">Your Cart</h1>
+        <div style="display:grid;grid-template-columns:1fr;gap:24px;">
+          ${window.innerWidth >= 1024 ? '<div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;"><div>' : '<div>'}
+
+          <!-- Free Delivery -->
+          ${isFreeDelivery ? `<div class="card" style="background:#f0fdf4;border-color:#bbf7d0;margin-bottom:16px;">
+            <div class="card-content" style="padding:16px 20px;">
+              <p style="font-size:14px;font-weight:600;color:#15803d;">🎉 Congratulations! FREE Delivery unlocked!</p>
+            </div>
+          </div>` : ''}
+
+          <!-- Reward Points -->
+          ${c.totalRewardPoints > 0 ? `<div class="card" style="background:#eff6ff;border-color:#bfdbfe;margin-bottom:16px;">
+            <div class="card-content" style="padding:16px 20px;">
+              <p style="font-size:14px;color:#1d4ed8;">🎊 Congrats! You will get <strong>${c.totalRewardPoints}</strong> Reward Points</p>
+            </div>
+          </div>` : ''}
+
+          <!-- Cart Items -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Items (${totalItems})</h3></div>
+            <div class="card-content" style="display:flex;flex-direction:column;gap:16px;">${cartItemsHtml}</div>
+          </div>
+
+          <!-- Tip -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Tip Your Delivery Partner</h3></div>
+            <div class="card-content">
+              <p style="font-size:14px;color:#9ca3af;margin-bottom:12px;">100% goes to them</p>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                ${[20, 30, 50].map(a => `<button class="btn ${selectedTip === a ? 'btn-primary' : 'btn-outline'}" onclick="selectedTip=${a};setTip(${a});renderCart();">₹${a}</button>`).join('')}
+                <input type="number" class="input" placeholder="Other" style="height:40px;" onchange="selectedTip=0;setTip(parseInt(this.value)||0);renderCart();">
+              </div>
+            </div>
+          </div>
+
+          <!-- Coupon -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Apply Coupon</h3></div>
+            <div class="card-content">
+              <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <input id="coupon-code" class="input" placeholder="Enter coupon code" value="${c.appliedCoupon || ''}" oninput="this.value=this.value.toUpperCase()">
+                <button class="btn btn-primary" onclick="handleApplyCoupon()">Apply</button>
+              </div>
+              ${c.appliedCoupon ? `<div style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;padding:8px 12px;border-radius:8px;">
+                <span style="font-size:14px;font-weight:600;color:#15803d;">${c.appliedCoupon} Applied</span>
+                <button onclick="removeCoupon();renderCart();" style="font-size:12px;color:#16a34a;">Remove</button>
+              </div>` : ''}
+            </div>
+          </div>
+
+          ${window.innerWidth >= 1024 ? '</div>' : ''}
+
+          <!-- Bill Details -->
+          <div>
+            <div class="card" style="position:sticky;top:80px;">
+              <div class="card-header"><h3>Bill Details</h3></div>
+              <div class="card-content" style="font-size:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                  <span style="color:#9ca3af;">Subtotal</span><span style="font-weight:500;">₹${c.subtotal}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                  <span style="color:#9ca3af;">Tax</span><span style="font-weight:500;">₹${c.tax.toFixed(2)}</span>
+                </div>
+                ${c.discount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:12px;color:#16a34a;">
+                  <span>Discount</span><span style="font-weight:500;">-₹${c.discount}</span>
+                </div>` : ''}
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                  <span style="color:#9ca3af;">Delivery ${c.deliveryFee === 0 ? '(FREE)' : ''}</span>
+                  <span style="font-weight:500;${c.deliveryFee === 0 ? 'color:#16a34a;' : ''}">${c.deliveryFee === 0 ? '<s style="color:#9ca3af;">₹45</s>' : '₹' + c.deliveryFee}</span>
+                </div>
+                ${c.tip > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                  <span style="color:#9ca3af;">Tip</span><span style="font-weight:500;">₹${c.tip}</span>
+                </div>` : ''}
+                <div style="border-top:1px solid #f3f3f3;padding-top:12px;display:flex;justify-content:space-between;font-weight:700;font-size:16px;">
+                  <span>Total</span><span style="color:#ea580c;">₹${total.toFixed(2)}</span>
+                </div>
+                ${c.totalRewardPoints > 0 ? `<p style="text-align:center;font-size:12px;color:#9ca3af;margin-top:12px;">You saved ₹${c.discount} + earned ${c.totalRewardPoints} points</p>` : ''}
+                <a href="checkout.html" class="btn btn-primary btn-full btn-lg" style="margin-top:16px;">Proceed to Checkout</a>
+              </div>
+            </div>
+          </div>
+
+          ${window.innerWidth >= 1024 ? '</div>' : ''}
+        </div>`;
+
+            updateAllCartCounts();
+        }
+
+        function handleApplyCoupon() {
+            const code = document.getElementById('coupon-code').value;
+            if (code === 'HALF50') applyCoupon(code, 150);
+            else if (code === 'CASH100') applyCoupon(code, 100);
+            else { showToast('Invalid coupon code'); return; }
+            showToast('Coupon applied!');
+            renderCart();
+        }
+
+        renderCart();
+    </script>
+</body>
+
+</html>

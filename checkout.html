@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - FoodIt</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="header-mount"></div>
+    
+    <main class="max-w-4xl mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold mb-6">Checkout</h1>
+        
+        <div class="grid grid-1 lg:grid-2" style="gap:24px;">
+            <!-- Left Column -->
+            <div>
+                <!-- Delivery Type -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Delivery Type</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="option-buttons" style="display:flex; gap:12px;">
+                            <button class="option-btn delivery-type selected" data-type="delivery">🏠 Home Delivery</button>
+                            <button class="option-btn delivery-type" data-type="takeaway">📦 Takeaway</button>
+                            <button class="option-btn delivery-type" data-type="dining">🍽️ Dine In</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Address (for delivery) -->
+                <div id="address-section" class="card mb-4">
+                    <div class="card-header" style="display:flex; justify-content:space-between;">
+                        <h3>Delivery Address</h3>
+                        <button class="btn btn-sm btn-outline" onclick="changeAddress()">Change</button>
+                    </div>
+                    <div class="card-content" id="selected-address">
+                        <!-- Address will show here -->
+                    </div>
+                </div>
+                
+                <!-- Payment Method -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Payment Method</h3>
+                    </div>
+                    <div class="card-content">
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <label class="payment-option" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                <input type="radio" name="payment" value="upi" checked> 📱 UPI (Google Pay/PhonePe)
+                            </label>
+                            <label class="payment-option" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                <input type="radio" name="payment" value="card"> 💳 Credit/Debit Card
+                            </label>
+                            <label class="payment-option" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                <input type="radio" name="payment" value="cod"> 💵 Cash on Delivery
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Order Summary -->
+            <div>
+                <div class="card" style="position:sticky; top:80px;">
+                    <div class="card-header">
+                        <h3>Order Summary</h3>
+                    </div>
+                    <div class="card-content" id="order-summary">
+                        <!-- Will be populated from cart -->
+                    </div>
+                    <div class="card-content" style="border-top:1px solid var(--border-color); padding-top:16px;">
+                        <button class="btn btn-primary btn-full btn-lg" onclick="placeOrder()">
+                            Place Order • ₹<span id="final-total">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Order Success Modal (Hidden initially) -->
+    <div id="success-modal" class="order-success-overlay" style="display:none;">
+        <div class="order-success-card">
+            <div class="checkmark-circle">
+                <div class="checkmark"></div>
+            </div>
+            <h2 style="font-size:28px; font-weight:700; margin-bottom:8px;">Order Placed!</h2>
+            <p style="color:var(--text-secondary); margin-bottom:16px;">Your order has been confirmed</p>
+            <p style="font-size:14px; margin-bottom:24px;">Order #<span id="order-number"></span></p>
+            <button class="btn btn-primary" onclick="goToTrackOrder()">Track Order</button>
+            <button class="btn btn-outline" onclick="continueShopping()" style="margin-top:12px;">Continue Shopping</button>
+        </div>
+    </div>
+    
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let selectedDeliveryType = 'delivery';
+        
+        function loadCheckout() {
+            const cart = store.cart;
+            if (cart.items.length === 0) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Load address
+            const user = store.user;
+            const defaultAddress = user?.addresses?.find(a => a.isDefault) || user?.addresses?.[0];
+            if (defaultAddress) {
+                document.getElementById('selected-address').innerHTML = `
+                    <p><strong>${defaultAddress.label}</strong></p>
+                    <p class="text-sm text-gray-500">${defaultAddress.address}</p>
+                `;
+            } else {
+                document.getElementById('selected-address').innerHTML = `
+                    <p class="text-gray-500">No address saved. <a href="profile.html">Add address</a></p>
+                `;
+            }
+            
+            // Load order summary
+            const subtotal = cart.subtotal;
+            const tax = cart.tax;
+            const deliveryFee = selectedDeliveryType === 'delivery' ? cart.deliveryFee : 0;
+            const total = subtotal + tax + deliveryFee;
+            
+            document.getElementById('order-summary').innerHTML = `
+                <div style="margin-bottom:16px;">
+                    ${cart.items.map(item => `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                            <span>${item.name} x${item.quantity}</span>
+                            <span>₹${item.price * item.quantity}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="border-top:1px solid var(--border-color); padding-top:12px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>Subtotal</span><span>₹${subtotal}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>Tax (5%)</span><span>₹${tax}</span>
+                    </div>
+                    ${deliveryFee > 0 ? `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span>Delivery Fee</span><span>₹${deliveryFee}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            document.getElementById('final-total').textContent = total;
+        }
+        
+        // Delivery type selection
+        document.querySelectorAll('.delivery-type').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.delivery-type').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedDeliveryType = btn.dataset.type;
+                
+                const addressSection = document.getElementById('address-section');
+                if (selectedDeliveryType === 'delivery') {
+                    addressSection.style.display = 'block';
+                } else {
+                    addressSection.style.display = 'none';
+                }
+                loadCheckout();
+            });
+        });
+        
+        function changeAddress() {
+            window.location.href = 'profile.html';
+        }
+    
+        function placeOrder() {
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            
+            // Generate order ID
+            const orderId = 'FD' + Date.now();
+            const order = {
+                id: orderId,
+                date: new Date().toLocaleString(),
+                items: store.cart.items,
+                subtotal: store.cart.subtotal,
+                tax: store.cart.tax,
+                deliveryFee: selectedDeliveryType === 'delivery' ? store.cart.deliveryFee : 0,
+                total: calculateTotal(),
+                deliveryType: selectedDeliveryType,
+                paymentMethod: paymentMethod,
+                status: 'confirmed',
+                estimatedDelivery: '30-40 minutes'
+            };
+            
+            // Add to orders
+            addOrder(order);
+            
+            // Show success popup on screen (not below webpage)
+            const successPopup = `
+                <div id="orderSuccessPopup" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+                    <div style="background:white; border-radius:32px; padding:48px 32px; text-align:center; max-width:400px; width:90%; animation:scaleIn 0.4s ease;">
+                        <div style="width:100px; height:100px; margin:0 auto 24px; background:linear-gradient(135deg,#10b981,#059669); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                            <div style="width:50px; height:50px; border-right:4px solid white; border-bottom:4px solid white; transform:rotate(45deg); animation:drawCheck 0.5s ease-out 0.3s forwards; opacity:0;"></div>
+                        </div>
+                        <h2 style="font-size:28px; font-weight:800; margin-bottom:8px; color:#1a1a2e;">Order Placed!</h2>
+                        <p style="color:#6c757d; margin-bottom:16px;">Your order has been confirmed</p>
+                        <p style="font-weight:700; margin-bottom:24px; background:#f3f3f3; padding:8px; border-radius:12px;">Order #${orderId}</p>
+                        <button onclick="goToTrackOrderFromPopup('${orderId}')" style="width:100%; padding:14px; background:linear-gradient(135deg,#f97316,#ea580c); color:white; border:none; border-radius:16px; font-weight:700; margin-bottom:12px; cursor:pointer;">📦 Track Order</button>
+                        <button onclick="continueShoppingFromPopup()" style="width:100%; padding:14px; background:white; border:2px solid #e5e7eb; border-radius:16px; font-weight:700; cursor:pointer;">Continue Shopping</button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes scaleIn {
+                        from {
+                            opacity: 0;
+                            transform: scale(0.8);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                    }
+                    @keyframes drawCheck {
+                        from {
+                            opacity: 0;
+                            width: 0;
+                            height: 0;
+                        }
+                        to {
+                            opacity: 1;
+                            width: 50px;
+                            height: 50px;
+                        }
+                    }
+                </style>
+            `;
+            
+            // Remove existing popup if any
+            const existingPopup = document.getElementById('orderSuccessPopup');
+            if (existingPopup) existingPopup.remove();
+            
+            document.body.insertAdjacentHTML('beforeend', successPopup);
+            
+            // Add reward points
+            if (store.user) {
+                const pointsEarned = Math.floor(order.total / 10);
+                store.user.rewardPoints = (store.user.rewardPoints || 0) + pointsEarned;
+                saveStore();
+            }
+        }
+
+        function goToTrackOrderFromPopup(orderId) {
+            window.location.href = `track-order.html?id=${orderId}`;
+        }
+
+        function continueShoppingFromPopup() {
+            window.location.href = 'index.html';
+        }
+
+
+        function goToTrackOrder() {
+            window.location.href = `track-order.html?id=${document.getElementById('order-number').textContent}`;
+        }
+        
+        function continueShopping() {
+            window.location.href = 'index.html';
+        }
+        
+        document.getElementById('header-mount').innerHTML = renderHeader();
+        loadCheckout();
+    </script>
+</body>
+</html>

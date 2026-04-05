@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - FoodIt</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="pb-24">
+    <div id="header-mount"></div>
+    <main class="max-w-7xl px-4 py-6">
+        <!-- Search Bar -->
+        <div style="position:relative;margin-bottom:24px;">
+            <span style="position:absolute;left:16px;top:14px;color:#9ca3af;">🔍</span>
+            <input id="search-input" type="text" class="input" placeholder="Search for food, restaurant..."
+                style="padding-left:48px;" oninput="filterMenu()">
+        </div>
+
+        <!-- Filter Bar -->
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:24px;">
+            <button id="btn-veg" class="btn btn-outline btn-sm" onclick="toggleVeg()" style="font-size:13px;">🥬 Veg
+                Only</button>
+            <button id="btn-nonveg" class="btn btn-outline btn-sm" onclick="toggleNonVeg()" style="font-size:13px;">🍗
+                Non-Veg</button>
+            <select id="sort-select" class="input" style="width:200px;height:42px;" onchange="filterMenu()">
+                <option value="popularity">Popularity</option>
+                <option value="rating">Rating</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+            </select>
+        </div>
+
+        <!-- Results Count -->
+        <p id="results-count" style="color:#9ca3af;font-size:14px;margin-bottom:16px;"></p>
+
+        <!-- Menu Grid -->
+        <div id="menu-grid" class="grid grid-2 lg-grid-4" style="gap:24px;"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" style="display:none;text-align:center;padding:80px 0;">
+            <div style="font-size:64px;margin-bottom:16px;">🍽️</div>
+            <h3 style="font-size:18px;font-weight:700;color:#111;">No items found</h3>
+            <p style="color:#9ca3af;">Try adjusting your filters or search query</p>
+        </div>
+    </main>
+    <div id="bottomnav-mount"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('header-mount').innerHTML = renderHeader();
+        document.getElementById('bottomnav-mount').innerHTML = renderBottomNav('');
+
+        let vegOnly = false, nonVegOnly = false;
+
+        function toggleVeg() {
+            vegOnly = !vegOnly; if (vegOnly) nonVegOnly = false;
+            document.getElementById('btn-veg').style.background = vegOnly ? '#f0fdf4' : '';
+            document.getElementById('btn-veg').style.color = vegOnly ? '#16a34a' : '';
+            document.getElementById('btn-nonveg').style.background = '';
+            document.getElementById('btn-nonveg').style.color = '';
+            filterMenu();
+        }
+        function toggleNonVeg() {
+            nonVegOnly = !nonVegOnly; if (nonVegOnly) vegOnly = false;
+            document.getElementById('btn-nonveg').style.background = nonVegOnly ? '#fef2f2' : '';
+            document.getElementById('btn-nonveg').style.color = nonVegOnly ? '#dc2626' : '';
+            document.getElementById('btn-veg').style.background = '';
+            document.getElementById('btn-veg').style.color = '';
+            filterMenu();
+        }
+
+        function filterMenu() {
+            let items = [...menuItems];
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const sortBy = document.getElementById('sort-select').value;
+
+            if (query) items = items.filter(i => i.name.toLowerCase().includes(query) || i.description.toLowerCase().includes(query));
+            if (vegOnly) items = items.filter(i => i.veg);
+            if (nonVegOnly) items = items.filter(i => !i.veg);
+
+            switch (sortBy) {
+                case 'price-low': items.sort((a, b) => a.price - b.price); break;
+                case 'price-high': items.sort((a, b) => b.price - a.price); break;
+                case 'rating': items.sort((a, b) => b.rating - a.rating); break;
+                default: items.sort((a, b) => b.ratingCount - a.ratingCount); break;
+            }
+
+            const grid = document.getElementById('menu-grid');
+            const empty = document.getElementById('empty-state');
+            document.getElementById('results-count').textContent = `Showing ${items.length} items`;
+
+            if (items.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; }
+            else { grid.style.display = ''; empty.style.display = 'none'; grid.innerHTML = items.map(renderMenuCard).join(''); }
+        }
+
+        document.addEventListener('cart:updated', filterMenu);
+
+        filterMenu();
+    </script>
+</body>
+
+</html>

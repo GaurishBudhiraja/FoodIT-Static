@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - FoodIt</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body
+    style="background:linear-gradient(135deg,#fff7ed,#ffffff,#fff7ed);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;">
+    <div style="width:100%;max-width:448px;">
+        <!-- Branding -->
+        <div class="text-center mb-8 slide-in-top">
+            <div
+                style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:16px;background:linear-gradient(135deg,#fb923c,#ea580c);margin-bottom:16px;box-shadow:0 20px 25px rgba(0,0,0,0.1);transform:rotate(3deg);font-size:40px;">
+                🍕</div>
+            <h1 class="text-4xl font-black" style="color:#111;margin-bottom:8px;">FoodIt</h1>
+            <p style="color:#6b7280;font-weight:500;">Your cravings, delivered fast.</p>
+        </div>
+
+        <div
+            style="background:white;border-radius:24px;box-shadow:0 20px 50px rgba(0,0,0,0.1);padding:32px;border:1px solid rgba(251,146,60,0.1);position:relative;overflow:hidden;">
+            <!-- Progress bar for signup -->
+            <div id="progress-bar"
+                style="display:none;position:absolute;top:0;left:0;right:0;height:6px;background:#f3f3f3;">
+                <div id="progress-fill" style="height:100%;background:#f97316;transition:width 0.5s;width:25%;"></div>
+            </div>
+
+            <!-- Views Container -->
+            <div id="auth-views">
+                <!-- Login Choice (default) -->
+                <div id="view-login-choice" class="auth-view fade-in-up">
+                    <h2 class="text-2xl font-bold text-center mb-6" style="color:#1f2937;">Welcome Back</h2>
+
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <button class="btn btn-full"
+                            style="height:48px;background:white;color:#374151;border:2px solid #f3f3f3;box-shadow:0 1px 3px rgba(0,0,0,0.05);gap:12px;"
+                            onclick="quickLogin('google')">
+                            <img src="https://www.google.com/favicon.ico" style="width:20px;height:20px;" alt="G">
+                            Continue with Google
+                        </button>
+                        <button class="btn btn-primary btn-full"
+                            style="height:48px;box-shadow:0 4px 15px rgba(251,146,60,0.3);"
+                            onclick="switchView('signin-phone')">
+                            📱 Continue with Phone
+                        </button>
+                        <button class="btn btn-full" style="height:48px;background:#111;color:white;"
+                            onclick="switchView('signin-email')">
+                            ✉️ Continue with Email
+                        </button>
+                    </div>
+
+                    <div style="padding-top:24px;text-align:center;">
+                        <button onclick="switchView('signup-profile')"
+                            style="width:100%;color:#6b7280;padding:8px;font-weight:500;transition:all 0.2s;">
+                            Don't have an account? <span style="color:#ea580c;font-weight:700;">Sign up!</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sign In Phone -->
+                <div id="view-signin-phone" class="auth-view" style="display:none;">
+                    <button onclick="switchView('login-choice')"
+                        style="color:#ea580c;font-size:14px;font-weight:700;margin-bottom:12px;">← Back</button>
+                    <h2 class="text-2xl font-bold mb-4" style="color:#1f2937;">Login with Phone</h2>
+                    <div style="position:relative;margin-bottom:16px;">
+                        <span style="position:absolute;left:16px;top:14px;color:#9ca3af;font-weight:700;">+91</span>
+                        <input id="login-phone" type="tel" class="input" style="padding-left:48px;"
+                            placeholder="Phone Number" maxlength="10"
+                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+                    </div>
+                    <button class="btn btn-primary btn-full" style="height:48px;" onclick="sendLoginOtp()">Send
+                        OTP</button>
+                </div>
+
+                <!-- Sign In Phone OTP -->
+                <div id="view-signin-phone-otp" class="auth-view" style="display:none;">
+                    <div class="text-center mb-4">
+                        <h2 class="text-2xl font-bold" style="color:#1f2937;margin-bottom:8px;">Verify Phone</h2>
+                        <p style="color:#6b7280;">Enter the code sent to <span id="login-phone-display"
+                                style="color:#111;font-weight:700;"></span></p>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:center;gap:12px;margin-bottom:24px;position:relative;height:64px;">
+                        <div id="otp-slots-login" style="display:flex;gap:12px;"></div>
+                        <input id="login-otp" type="tel" maxlength="4" style="position:absolute;inset:0;opacity:0;"
+                            autofocus oninput="updateOtpSlots('login')">
+                    </div>
+                    <button class="btn btn-primary btn-full" style="height:48px;" onclick="verifyLoginOtp()">Verify &
+                        Login</button>
+                    <div class="text-center mt-4">
+                        <button onclick="switchView('signin-phone')"
+                            style="color:#9ca3af;font-size:12px;font-weight:700;">Change phone number?</button>
+                        <p
+                            style="font-size:10px;color:#d1d5db;text-transform:uppercase;letter-spacing:0.05em;margin-top:8px;">
+                            Default OTP: 0000</p>
+                    </div>
+                </div>
+
+                <!-- Sign In Email -->
+                <div id="view-signin-email" class="auth-view" style="display:none;">
+                    <button onclick="switchView('login-choice')"
+                        style="color:#ea580c;font-size:14px;font-weight:700;margin-bottom:12px;">← Back</button>
+                    <h2 class="text-2xl font-bold mb-4" style="color:#1f2937;">Login with Email</h2>
+                    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+                        <input id="login-email" type="email" class="input" placeholder="Enter your email">
+                        <div style="position:relative;">
+                            <input id="login-password" type="password" class="input" placeholder="Enter your password">
+                            <button onclick="togglePassword('login-password')"
+                                style="position:absolute;right:16px;top:14px;color:#9ca3af;">👁️</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" style="height:48px;"
+                        onclick="loginWithEmail()">Login</button>
+                </div>
+
+                <!-- Sign Up Profile -->
+                <div id="view-signup-profile" class="auth-view" style="display:none;">
+                    <button onclick="switchView('login-choice')"
+                        style="color:#9ca3af;font-size:14px;font-weight:700;margin-bottom:12px;">← Back to
+                        login</button>
+                    <h2 class="text-2xl font-bold mb-4" style="color:#1f2937;">Create Account</h2>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                        <input id="signup-fname" class="input" placeholder="First Name">
+                        <input id="signup-lname" class="input" placeholder="Last Name">
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label
+                            style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;margin-left:4px;">Email
+                            (Optional)</label>
+                        <input id="signup-email" class="input" placeholder="name@example.com" style="margin-top:4px;">
+                    </div>
+                    <div style="position:relative;margin-bottom:16px;">
+                        <span style="position:absolute;left:16px;top:14px;color:#9ca3af;font-weight:700;">+91</span>
+                        <input id="signup-phone" type="tel" class="input" style="padding-left:48px;"
+                            placeholder="Phone Number" maxlength="10"
+                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+                    </div>
+                    <button class="btn btn-primary btn-full" style="height:48px;" onclick="startSignupOtp()">Send
+                        OTP</button>
+                </div>
+
+                <!-- Sign Up OTP -->
+                <div id="view-signup-otp" class="auth-view" style="display:none;">
+                    <div class="text-center mb-4">
+                        <h2 class="text-2xl font-bold" style="color:#1f2937;margin-bottom:8px;">Verify Phone</h2>
+                        <p style="color:#6b7280;">Enter the code sent to <span id="signup-phone-display"
+                                style="color:#111;font-weight:700;"></span></p>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:center;gap:12px;margin-bottom:24px;position:relative;height:64px;">
+                        <div id="otp-slots-signup" style="display:flex;gap:12px;"></div>
+                        <input id="signup-otp" type="tel" maxlength="4" style="position:absolute;inset:0;opacity:0;"
+                            autofocus oninput="updateOtpSlots('signup')">
+                    </div>
+                    <button class="btn btn-primary btn-full" style="height:48px;" onclick="verifySignupOtp()">Verify &
+                        Continue</button>
+                    <div class="text-center mt-4">
+                        <button onclick="switchView('signup-profile')"
+                            style="color:#9ca3af;font-size:12px;font-weight:700;">Change phone number?</button>
+                        <p
+                            style="font-size:10px;color:#d1d5db;text-transform:uppercase;letter-spacing:0.05em;margin-top:8px;">
+                            Default OTP: 0000</p>
+                    </div>
+                </div>
+
+                <!-- Sign Up Address -->
+                <div id="view-signup-address" class="auth-view" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h2 class="text-2xl font-bold" style="color:#1f2937;">Add Address</h2>
+                        <button onclick="skipAddress()"
+                            style="color:#ea580c;font-weight:700;font-size:14px;padding:4px 12px;border-radius:8px;">Skip
+                            for now</button>
+                    </div>
+                    <textarea id="signup-address" class="input textarea" rows="3"
+                        placeholder="Flat No, House Name, Street" style="margin-bottom:12px;"></textarea>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                        <input id="signup-pincode" class="input" placeholder="Pincode" maxlength="6"
+                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)">
+                        <button class="btn btn-outline btn-sm"
+                            style="font-size:11px;color:#9ca3af;border:2px dashed #e5e7eb;">Detect Location</button>
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <label
+                            style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;margin-left:4px;">Landmarks
+                            (Optional)</label>
+                        <input id="signup-landmark" class="input" placeholder="e.g. Near Royal Hospital"
+                            style="margin-top:4px;">
+                    </div>
+                    <button class="btn btn-primary btn-full btn-lg" onclick="finishSignup()">Finish Set Up</button>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center mt-8"
+            style="color:#9ca3af;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">
+            FoodIt Delivery Solutions • © 2026
+        </p>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.auth-view').forEach(v => v.style.display = 'none');
+            const target = document.getElementById('view-' + viewId);
+            if (target) { target.style.display = 'block'; target.className = 'auth-view slide-in-right'; }
+
+            const pb = document.getElementById('progress-bar');
+            const pf = document.getElementById('progress-fill');
+            if (viewId.startsWith('signup-')) {
+                pb.style.display = 'block';
+                pf.style.width = viewId === 'signup-profile' ? '25%' : viewId === 'signup-otp' ? '50%' : '75%';
+            } else {
+                pb.style.display = 'none';
+            }
+        }
+
+        // OTP slot rendering
+        function renderOtpSlots(prefix) {
+            const container = document.getElementById(`otp-slots-${prefix}`);
+            container.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                container.innerHTML += `<div id="${prefix}-slot-${i}" style="width:48px;height:64px;border-radius:12px;border:2px solid #f3f3f3;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;transition:all 0.2s;"></div>`;
+            }
+        }
+        renderOtpSlots('login');
+        renderOtpSlots('signup');
+
+        function updateOtpSlots(prefix) {
+            const val = document.getElementById(`${prefix}-otp`).value.replace(/\D/g, '').slice(0, 4);
+            document.getElementById(`${prefix}-otp`).value = val;
+            for (let i = 0; i < 4; i++) {
+                const slot = document.getElementById(`${prefix}-slot-${i}`);
+                slot.textContent = val[i] || '';
+                slot.style.borderColor = val.length === i ? '#f97316' : val.length > i ? '#e5e7eb' : '#f3f3f3';
+                slot.style.background = val.length === i ? 'rgba(255,247,237,0.5)' : val.length > i ? '#f9fafb' : 'white';
+            }
+        }
+
+        function togglePassword(id) {
+            const inp = document.getElementById(id);
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+
+        // Auth handlers
+        function quickLogin(provider) {
+            completeAuth({ id: provider + '-user', name: provider.charAt(0).toUpperCase() + provider.slice(1) + ' User', phone: '', email: provider + '@user.com', addresses: [], rewardPoints: 0 });
+        }
+
+        function sendLoginOtp() {
+            const phone = document.getElementById('login-phone').value;
+            if (phone.length !== 10) { showToast('Enter a valid 10-digit phone number'); return; }
+            document.getElementById('login-phone-display').textContent = '+91 ' + phone;
+            switchView('signin-phone-otp');
+        }
+
+        function verifyLoginOtp() {
+            if (document.getElementById('login-otp').value !== '0000') { showToast('Invalid OTP. Use 0000'); return; }
+            const phone = document.getElementById('login-phone').value;
+            completeAuth({ id: 'phone-user', name: 'Phone User', phone, addresses: [], rewardPoints: 0 });
+        }
+
+        function loginWithEmail() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            if (!email.includes('@') || pass.length < 6) { showToast('Enter valid email and password (min 6 chars)'); return; }
+            completeAuth({ id: 'email-user', name: email.split('@')[0], email, phone: '', addresses: [], rewardPoints: 0 });
+        }
+
+        function startSignupOtp() {
+            const fn = document.getElementById('signup-fname').value;
+            const ln = document.getElementById('signup-lname').value;
+            const phone = document.getElementById('signup-phone').value;
+            if (!fn || !ln || phone.length !== 10) { showToast('Fill in required fields'); return; }
+            document.getElementById('signup-phone-display').textContent = '+91 ' + phone;
+            switchView('signup-otp');
+        }
+
+        function verifySignupOtp() {
+            if (document.getElementById('signup-otp').value !== '0000') { showToast('Invalid OTP. Use 0000'); return; }
+            switchView('signup-address');
+        }
+
+        function skipAddress() {
+            finishSignupWithAddress([]);
+        }
+
+        function finishSignup() {
+            const addr = document.getElementById('signup-address').value;
+            const pin = document.getElementById('signup-pincode').value;
+            const landmark = document.getElementById('signup-landmark').value;
+            const addresses = addr ? [{ id: '1', label: 'Home', address: `${addr}, ${landmark ? landmark + ', ' : ''}${pin}`, isDefault: true }] : [];
+            finishSignupWithAddress(addresses);
+        }
+
+        function finishSignupWithAddress(addresses) {
+            const fn = document.getElementById('signup-fname').value;
+            const ln = document.getElementById('signup-lname').value;
+            const phone = document.getElementById('signup-phone').value;
+            const email = document.getElementById('signup-email').value;
+            completeAuth({
+                id: 'new-user-' + Date.now(),
+                name: `${fn} ${ln}`,
+                phone, email,
+                addresses,
+                rewardPoints: 0,
+            });
+        }
+
+        function completeAuth(userData) {
+            setUser(userData);
+            if (userData.addresses?.[0]) { setSelectedLocation(userData.addresses[0]); }
+            setTimeout(() => { window.location.href = 'index.html'; }, 500);
+        }
+    </script>
+</body>
+
+</html>
